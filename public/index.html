@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | ESP32 & STM32</title>
+
+  <!-- 
+    =========================================================================
+    DEPENDENCIES (CDN)
+    =========================================================================
+  -->
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            dashBg: '#c0c0c0',
+            cardBg: '#c0c0c0',
+            cardBorder: '#808080',
+            accentCoral: '#ff4b72',
+            accentPurple: '#8b5cf6',
+            accentTeal: '#00f2c3',
+            accentYellow: '#ffb703',
+            winBlue: '#000080',
+            winGray: '#c0c0c0',
+            winDarkGray: '#808080',
+          },
+          fontFamily: {
+            retro: ['"Segoe UI"', 'Tahoma', '"MS Sans Serif"', 'Geneva', 'sans-serif'],
+            mono: ['"Share Tech Mono"', '"Courier New"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts: Share Tech Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <!-- FontAwesome Icons CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    /* =========================================================================
+       RETRO OS UI KIT DESIGN SYSTEM STYLES
+       ========================================================================= */
+    :root {
+      --retro-bg: #c0c0c0;
+      --retro-page-bg: #d0cbc3;
+      --retro-blue: #000080;
+      --retro-blue-gradient: linear-gradient(90deg, #000080 0%, #1084d0 100%);
+      --retro-white: #ffffff;
+      --retro-light-gray: #dfdfdf;
+      --retro-dark-gray: #808080;
+      --retro-black: #000000;
+      --retro-crt-bg: #0c1015;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--retro-page-bg);
+      font-family: 'Segoe UI', Tahoma, 'MS Sans Serif', Geneva, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: #000000;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 3D Raised Beveled Card Container */
+    .retro-card {
+      background: var(--retro-bg);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow:
+        inset 1px 1px 0px var(--retro-white),
+        inset -1px -1px 0px var(--retro-black),
+        inset 2px 2px 0px var(--retro-light-gray),
+        inset -2px -2px 0px var(--retro-dark-gray),
+        2px 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Card Title Bar (Retro OS Header Strip) */
+    .retro-card-header {
+      background: var(--retro-blue-gradient);
+      color: var(--retro-white);
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+      user-select: none;
+    }
+
+    /* 3D Push Button */
+    .retro-button {
+      background: var(--retro-bg);
+      color: var(--retro-black);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray), inset -1px -1px 0px var(--retro-dark-gray);
+      padding: 3px 12px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      outline: none;
+      user-select: none;
+    }
+
+    .retro-button:focus {
+      outline: 1px dotted #000000;
+      outline-offset: -4px;
+    }
+
+    .retro-button:active {
+      border-top: 2px solid var(--retro-black);
+      border-left: 2px solid var(--retro-black);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 0px var(--retro-dark-gray);
+      padding-top: 4px;
+      padding-left: 13px;
+      padding-bottom: 2px;
+      padding-right: 11px;
+    }
+
+    /* Sunken 3D Inset Panel */
+    .retro-sunken {
+      background: var(--retro-white);
+      border-top: 2px solid var(--retro-dark-gray);
+      border-left: 2px solid var(--retro-dark-gray);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 0px var(--retro-black), inset -1px -1px 0px var(--retro-light-gray);
+    }
+
+    /* Dark LCD / Digital Telemetry Readout Box */
+    .retro-lcd-box {
+      background: #0d1217;
+      border-top: 2px solid var(--retro-dark-gray);
+      border-left: 2px solid var(--retro-dark-gray);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 0px #000000, inset -1px -1px 0px #303540;
+      padding: 6px 10px;
+      font-family: 'Share Tech Mono', 'Courier New', monospace;
+    }
+
+    /* Retro Oscilloscope / CRT Screen Container */
+    .retro-crt-screen {
+      background-color: var(--retro-crt-bg);
+      background-image:
+        linear-gradient(rgba(0, 242, 195, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 242, 195, 0.06) 1px, transparent 1px);
+      background-size: 20px 20px;
+      border-top: 2px solid var(--retro-dark-gray);
+      border-left: 2px solid var(--retro-dark-gray);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 2px 2px 4px #000000, inset -1px -1px 0px #3a404d;
+      position: relative;
+    }
+
+    /* Retro Custom Range Slider */
+    input[type=range] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: var(--retro-dark-gray);
+      border-top: 2px solid #000000;
+      border-left: 2px solid #000000;
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 22px;
+      background: var(--retro-bg);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray), inset -1px -1px 0px var(--retro-dark-gray);
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb:active {
+      background: #a8a8a8;
+      border-top: 2px solid var(--retro-black);
+      border-left: 2px solid var(--retro-black);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 0px var(--retro-dark-gray);
+    }
+
+    input[type=range]::-moz-range-track {
+      height: 8px;
+      background: var(--retro-dark-gray);
+      border-top: 2px solid #000000;
+      border-left: 2px solid #000000;
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+    }
+
+    input[type=range]::-moz-range-thumb {
+      width: 14px;
+      height: 22px;
+      background: var(--retro-bg);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray), inset -1px -1px 0px var(--retro-dark-gray);
+      cursor: pointer;
+    }
+
+    /* Retro Hardware Rocker Switch */
+    .retro-switch-container {
+      position: relative;
+      display: inline-block;
+      width: 58px;
+      height: 26px;
+      user-select: none;
+      vertical-align: middle;
+    }
+
+    .retro-switch-container input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      z-index: 5;
+      margin: 0;
+    }
+
+    .retro-switch-track {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #3b3f46;
+      border-top: 2px solid #000000;
+      border-left: 2px solid #000000;
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 1px #000000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      font-size: 9px;
+      font-weight: 800;
+      font-family: Tahoma, monospace;
+      color: #9ca3af;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .retro-switch-thumb {
+      position: absolute;
+      top: 1px;
+      left: 2px;
+      width: 24px;
+      height: 20px;
+      background: var(--retro-bg);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray), inset -1px -1px 0px var(--retro-dark-gray);
+      transition: transform 0.15s ease-in-out;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .retro-switch-thumb::after {
+      content: "";
+      width: 8px;
+      height: 10px;
+      border-left: 2px solid #707070;
+      border-right: 2px solid #707070;
+    }
+
+    .retro-switch-container input:checked+.retro-switch-track {
+      background: #1e3a2e;
+    }
+
+    .retro-switch-container input:checked+.retro-switch-track .retro-on-label {
+      color: #00f2c3;
+    }
+
+    .retro-switch-container input:checked~.retro-switch-thumb {
+      transform: translateX(28px);
+      background: #c8c8c8;
+    }
+
+    /* Small Retro Switch */
+    .retro-switch-small {
+      width: 48px;
+      height: 22px;
+    }
+
+    .retro-switch-small .retro-switch-thumb {
+      width: 20px;
+      height: 16px;
+      top: 1px;
+      left: 2px;
+    }
+
+    .retro-switch-small input:checked~.retro-switch-thumb {
+      transform: translateX(22px);
+    }
+
+    /* Dual Mode Switch (LDR vs PIR) */
+    .retro-switch-dual {
+      width: 68px;
+      height: 26px;
+    }
+
+    .retro-switch-dual .retro-switch-track {
+      padding: 0 8px;
+    }
+
+    .retro-switch-dual input:checked~.retro-switch-thumb {
+      transform: translateX(38px);
+      background: #c8c8c8;
+    }
+
+    /* Retro OS ComboBox / Select Input */
+    .retro-select {
+      background: var(--retro-white);
+      color: var(--retro-black);
+      border-top: 2px solid var(--retro-dark-gray);
+      border-left: 2px solid var(--retro-dark-gray);
+      border-right: 2px solid var(--retro-white);
+      border-bottom: 2px solid var(--retro-white);
+      box-shadow: inset 1px 1px 0px var(--retro-black), inset -1px -1px 0px var(--retro-light-gray);
+      padding: 4px 6px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .retro-select:focus {
+      outline: 1px dotted #000000;
+    }
+
+    /* Active OLED Preset Tab */
+    .oled-preset-btn.active {
+      background: var(--retro-blue) !important;
+      color: #ffffff !important;
+      border-top: 2px solid var(--retro-black) !important;
+      border-left: 2px solid var(--retro-black) !important;
+      border-right: 2px solid var(--retro-white) !important;
+      border-bottom: 2px solid var(--retro-white) !important;
+      box-shadow: inset 1px 1px 0px var(--retro-dark-gray) !important;
+    }
+
+    /* Retro Table Styling */
+    .retro-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 11px;
+    }
+
+    .retro-table th {
+      background: var(--retro-bg);
+      color: var(--retro-black);
+      border-top: 2px solid var(--retro-white);
+      border-left: 2px solid var(--retro-white);
+      border-right: 2px solid var(--retro-black);
+      border-bottom: 2px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray), inset -1px -1px 0px var(--retro-dark-gray);
+      padding: 4px 8px;
+      font-weight: 700;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      white-space: nowrap;
+    }
+
+    .retro-table tbody tr {
+      background: var(--retro-white);
+      color: var(--retro-black);
+      cursor: pointer;
+    }
+
+    .retro-table tbody tr:nth-child(even) {
+      background: #f7f7f7;
+    }
+
+    .retro-table tbody tr:hover {
+      background: var(--retro-blue) !important;
+      color: var(--retro-white) !important;
+    }
+
+    .retro-table tbody tr:hover td {
+      color: var(--retro-white) !important;
+    }
+
+    .retro-table tbody tr:hover span {
+      background: rgba(255, 255, 255, 0.2) !important;
+      color: var(--retro-white) !important;
+      border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    .retro-table td {
+      padding: 4px 8px !important;
+      border-bottom: 1px solid #e0e0e0;
+      font-family: inherit;
+    }
+
+    /* Retro Table Badge Overrides */
+    #eventLogTableBody td span {
+      display: inline-block;
+      border-radius: 0px !important;
+      padding: 1px 6px !important;
+      font-family: 'Share Tech Mono', monospace !important;
+      border: 1px solid var(--retro-dark-gray) !important;
+      background: #ececec !important;
+      color: #000000 !important;
+      font-size: 10px !important;
+    }
+
+    /* Retro Toast Overrides */
+    #toastContainer>div {
+      background: var(--retro-bg) !important;
+      color: #000000 !important;
+      border-top: 2px solid var(--retro-white) !important;
+      border-left: 2px solid var(--retro-white) !important;
+      border-right: 2px solid var(--retro-black) !important;
+      border-bottom: 2px solid var(--retro-black) !important;
+      border-radius: 0px !important;
+      box-shadow: 3px 3px 12px rgba(0, 0, 0, 0.5) !important;
+      font-family: Tahoma, 'Segoe UI', sans-serif !important;
+      font-size: 11px !important;
+      font-weight: 600 !important;
+      padding: 8px 12px !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 10px !important;
+    }
+
+    #toastContainer>div::before {
+      content: "🛈";
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      background: var(--retro-blue);
+      color: #ffffff;
+      font-weight: bold;
+      font-size: 13px;
+      border: 1px solid #000000;
+      flex-shrink: 0;
+    }
+
+    #toastContainer>div.border-accentCoral::before {
+      content: "⚠";
+      background: #c00000;
+    }
+
+    /* Live Telemetry Pulse Ring */
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+
+      50% {
+        transform: scale(1.15);
+        opacity: 1;
+      }
+
+      100% {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
+    }
+
+    .pulse-live {
+      animation: pulse-ring 1.8s infinite;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 14px;
+      height: 14px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #dfdfdf;
+      background-image: radial-gradient(#808080 20%, transparent 20%);
+      background-size: 2px 2px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--retro-bg);
+      border-top: 1px solid var(--retro-white);
+      border-left: 1px solid var(--retro-white);
+      border-right: 1px solid var(--retro-black);
+      border-bottom: 1px solid var(--retro-black);
+      box-shadow: inset 1px 1px 0px var(--retro-light-gray);
+    }
+
+    /* Hidden telemetry nodes preserved for JS background execution */
+    #modeStatusBadge,
+    #connectionPill {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen p-2 sm:p-5 flex flex-col justify-between">
+
+  <!-- =========================================================================
+       MAIN RETRO OS DASHBOARD CONTAINER
+       ========================================================================= -->
+  <div class="max-w-7xl w-full mx-auto space-y-4 flex-1">
+
+    <!-- TOP APPLICATION HEADER BAR -->
+    <header class="retro-card">
+      <div class="retro-card-header">
+        <div class="flex items-center gap-2">
+          <!-- Retro 4-color microchip icon -->
+          <div class="w-5 h-5 bg-white border border-black flex items-center justify-center p-0.5 shadow-inner">
+            <span class="grid grid-cols-2 gap-0.5 w-full h-full inline-grid">
+              <span class="bg-red-500"></span>
+              <span class="bg-green-500"></span>
+              <span class="bg-blue-600"></span>
+              <span class="bg-yellow-400"></span>
+            </span>
+          </div>
+          <span class="text-sm font-bold tracking-wide">Dashboard</span>
+        </div>
+
+        <!-- Hardware Specs Readout -->
+        <div class="flex items-center gap-3 font-mono text-[11px] text-gray-200">
+          <span>Host: <strong class="text-white">192.168.1.105</strong></span>
+          <span>Bus: <strong class="text-cyan-300">UART 115200</strong></span>
+        </div>
+      </div>
+
+      <!-- Preserved DOM IDs for JS telemetry engine without visual clutter -->
+      <div id="modeStatusBadge" class="hidden"></div>
+      <div id="connectionPill" class="hidden"></div>
+    </header>
+
+    <!-- =======================================================================
+         ROW 1: 5 CORE STATUS CARDS (Retro OS Style - LDR, LED, Mode, PIR, OLED)
+         ======================================================================= -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3.5">
+
+      <!-- Card 1: Ambient Light Intensity -->
+      <div class="retro-card flex flex-col">
+        <div class="retro-card-header min-h-[26px]">
+          <span class="font-bold">Ambient Light Telemetry</span>
+          <span class="text-[10px] font-mono opacity-80">LDR Sensor</span>
+        </div>
+        <div class="flex-1 p-2.5 bg-[#c0c0c0] flex items-center justify-between gap-2 border-t border-white">
+          <!-- Left Side: Label and Status -->
+          <div class="flex flex-col justify-center min-w-0">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-800 leading-tight">ADC Lux Intensity</div>
+            <!-- Preserves ID: kpiLuxStatus -->
+            <p id="kpiLuxStatus" class="text-xs text-teal-800 font-bold mt-0.5 truncate">Moderate Ambient</p>
+          </div>
+          <!-- Right Side: Black LCD Box -->
+          <div class="retro-lcd-box h-[46px] min-w-[105px] px-2.5 flex items-center justify-center flex-shrink-0">
+            <!-- Preserves ID: kpiLuxValue -->
+            <span id="kpiLuxValue" class="text-2xl font-bold text-[#00f2c3] tracking-wider">485</span>
+            <span class="text-xs text-gray-400 font-mono ml-1.5">Lux</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: LED Hardware Output -->
+      <div class="retro-card flex flex-col">
+        <div class="retro-card-header min-h-[26px]">
+          <span class="font-bold">LED Hardware Output</span>
+          <span class="text-[10px] font-mono opacity-80">Timer PWM</span>
+        </div>
+        <div class="flex-1 p-2.5 bg-[#c0c0c0] flex items-center justify-between gap-2 border-t border-white">
+          <!-- Left Side: Label and Status -->
+          <div class="flex flex-col justify-center min-w-0">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-800 leading-tight">Duty Cycle Output</div>
+            <!-- Preserves ID: kpiLedPowerText -->
+            <p id="kpiLedPowerText" class="text-xs text-rose-800 font-bold mt-0.5 truncate">POWER ON</p>
+          </div>
+          <!-- Right Side: Black LCD Box -->
+          <div class="retro-lcd-box h-[46px] min-w-[105px] px-2.5 flex items-center justify-center flex-shrink-0">
+            <!-- Preserves ID: kpiLedOutput -->
+            <span id="kpiLedOutput" class="text-2xl font-bold text-[#ff4b72] tracking-wider">75%</span>
+            <!-- Preserves ID: kpiPwmBadge -->
+            <span id="kpiPwmBadge"
+              class="text-[10px] font-mono px-1 py-0.5 bg-[#ff4b72]/20 text-[#ff4b72] border border-[#ff4b72]/40 ml-1.5">PWM 191</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Control Mode Status -->
+      <div class="retro-card flex flex-col">
+        <div class="retro-card-header min-h-[26px]">
+          <span class="font-bold">Closed-Loop Control</span>
+          <span class="text-[10px] font-mono opacity-80">STM32 MCU</span>
+        </div>
+        <div class="flex-1 p-2.5 bg-[#c0c0c0] flex items-center justify-between gap-2 border-t border-white">
+          <!-- Left Side: Label and Status -->
+          <div class="flex flex-col justify-center min-w-0 flex-1 pr-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-800 leading-tight">Operating Feedback</div>
+            <!-- Preserves ID: kpiModeDesc -->
+            <p id="kpiModeDesc" class="text-[11px] text-gray-800 font-bold mt-0.5 leading-tight">Auto (LDR Sensor)</p>
+          </div>
+          <!-- Right Side: Black LCD Box -->
+          <div class="retro-lcd-box h-[46px] min-w-[105px] px-2.5 flex items-center justify-center flex-shrink-0">
+            <!-- Preserves ID: kpiControlMode -->
+            <span id="kpiControlMode" class="text-2xl font-bold text-yellow-400 tracking-wider">AUTO</span>
+            <span id="kpiControlModeSub" class="text-[10px] text-gray-400 font-mono ml-1.5">(STM32)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: PIR Sensor Status (HC-SR501) -->
+      <div class="retro-card flex flex-col">
+        <div class="retro-card-header min-h-[26px]">
+          <span class="font-bold">PIR Sensor Telemetry</span>
+          <span class="text-[10px] font-mono opacity-80">HC-SR501</span>
+        </div>
+        <div class="flex-1 p-2.5 bg-[#c0c0c0] flex items-center justify-between gap-2 border-t border-white">
+          <!-- Left Side: Label and Status -->
+          <div class="flex flex-col justify-center min-w-0 flex-1 pr-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-800 leading-tight">Motion Detection</div>
+            <p id="kpiPirStatus" class="text-[11px] text-teal-800 font-bold mt-0.5 leading-tight">No Motion (Clear)</p>
+          </div>
+          <!-- Right Side: Black LCD Box -->
+          <div class="retro-lcd-box h-[46px] min-w-[105px] px-2.5 flex items-center justify-center flex-shrink-0">
+            <span id="kpiPirValue" class="text-xl font-bold text-gray-400 tracking-wider">CLEAR</span>
+            <span id="kpiPirBadge"
+              class="text-[10px] font-mono px-1 py-0.5 bg-gray-800 text-gray-300 border border-gray-600 ml-1.5">IDLE</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: 0.96-inch I2C OLED Display Status -->
+      <div class="retro-card flex flex-col">
+        <div class="retro-card-header min-h-[26px]">
+          <span class="font-bold">0.96" OLED Display</span>
+          <span class="text-[10px] font-mono opacity-80">SSD1306 I2C</span>
+        </div>
+        <div class="flex-1 p-2.5 bg-[#c0c0c0] flex items-center justify-between gap-2 border-t border-white">
+          <!-- Left Side: Label and Status -->
+          <div class="flex flex-col justify-center min-w-0 flex-1 pr-1">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-gray-800 leading-tight">Current Screen</div>
+            <p id="kpiOledStatus" class="text-[11px] text-blue-900 font-bold mt-0.5 leading-tight">Lux &amp; LED Status</p>
+          </div>
+          <!-- Right Side: Black LCD Box (OLED Display Simulation) -->
+          <div class="retro-lcd-box h-[46px] min-w-[120px] px-2 flex flex-col items-center justify-center flex-shrink-0 leading-tight">
+            <span id="kpiOledValue" class="text-[10px] font-bold text-cyan-300 tracking-tight font-mono text-center">485 Lux | LED: 75%</span>
+            <span id="kpiOledSub" class="text-[9px] text-cyan-400 font-mono tracking-tight uppercase">SCREEN 1/4</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =======================================================================
+         ROW 2: LIVE GRAPH (LEFT) & HARDWARE CONTROL HUB (RIGHT)
+         ======================================================================= -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+
+      <!-- LEFT COLUMN: LIVE AMBIENT LIGHT GRAPH (7 COLS) -->
+      <div class="lg:col-span-7 retro-card flex flex-col justify-between">
+        <div class="retro-card-header">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-chart-line text-teal-300"></i> Live Ambient Light Graph
+          </span>
+          <!-- Preserves ID: telemetryRateBadge -->
+          <span id="telemetryRateBadge"
+            class="px-2 py-0.2 bg-white border border-[#808080] text-[10px] font-mono font-bold text-gray-800">
+            Poll: 2s
+          </span>
+        </div>
+
+        <div class="p-3.5 bg-[#c0c0c0] space-y-3 flex-1 flex flex-col justify-between border-t border-white">
+          <div class="flex items-center justify-between text-xs text-gray-700">
+            <span>Real-time LDR telemetry streamed from STM32 ADC</span>
+            <span class="font-mono text-[11px] text-gray-500">10-Point FIFO Window</span>
+          </div>
+
+          <!-- Oscilloscope CRT Screen Container (Preserves ID: lightIntensityChart) -->
+          <div class="retro-crt-screen p-2 w-full flex-1" style="min-height: 250px;">
+            <canvas id="lightIntensityChart"></canvas>
+          </div>
+
+          <!-- Quick Metrics Footer (Preserves IDs: chartStatCurrent, chartStatThreshold, chartStatMode) -->
+          <div class="pt-2 border-t border-[#808080] flex flex-wrap items-center justify-between text-xs gap-2">
+            <div class="px-2.5 py-1 bg-white border border-[#808080] shadow-inner">
+              Current: <strong id="chartStatCurrent" class="text-black font-mono">485 Lux</strong>
+            </div>
+            <div class="px-2.5 py-1 bg-white border border-[#808080] shadow-inner">
+              Threshold: <strong id="chartStatThreshold" class="text-amber-800 font-mono">400 Lux</strong>
+            </div>
+            <div class="px-2.5 py-1 bg-white border border-[#808080] shadow-inner">
+              Target Mode: <strong id="chartStatMode" class="text-teal-800 font-mono">Auto Dimming</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: ESSENTIAL HARDWARE CONTROL HUB (5 COLS) -->
+      <div class="lg:col-span-5 retro-card flex flex-col justify-between">
+        <div class="retro-card-header">
+          <span class="flex items-center gap-1.5">
+            <i class="fa-solid fa-gamepad text-yellow-300"></i> Essential Hardware Control Hub
+          </span>
+          <span class="text-[10px] font-mono opacity-80">Manual Override</span>
+        </div>
+
+        <div class="p-3.5 bg-[#c0c0c0] space-y-3 flex-1 flex flex-col justify-between border-t border-white">
+          <div class="text-xs text-gray-700">
+            Manual override, hardware threshold, &amp; PWM dimming adjustments
+          </div>
+
+          <!-- INNER HARDWARE OVERRIDE BOX -->
+          <div class="bg-[#dfdfdf] border-2 border-[#808080] p-3 space-y-3 shadow-inner">
+
+            <!-- PRIMARY SWITCH: MANUAL OVERRIDE -->
+            <div class="flex items-center justify-between pb-2 border-b border-[#a0a0a0]">
+              <div>
+                <div class="text-xs font-bold text-black uppercase tracking-wide">Manual Override</div>
+                <!-- Preserves ID: overrideSubtitle -->
+                <p id="overrideSubtitle" class="text-[11px] text-gray-700 mt-0.5">Mode: <span
+                    class="text-teal-800 font-bold">STM32 AUTO</span></p>
+              </div>
+
+              <!-- Retro Rocker Switch (Preserves ID: overrideToggle) -->
+              <label class="retro-switch-container" title="Toggle Manual Override">
+                <input type="checkbox" id="overrideToggle">
+                <span class="retro-switch-track">
+                  <span class="retro-on-label">MAN</span>
+                  <span>AUTO</span>
+                </span>
+                <span class="retro-switch-thumb"></span>
+              </label>
+            </div>
+
+            <!-- SECONDARY GROUP: MANUAL CONTROLS (Preserves ID: manualControlsGroup) -->
+            <div id="manualControlsGroup" class="space-y-3 opacity-50 pointer-events-none transition-opacity">
+
+              <!-- Force LED Power Switch (Preserves ID: ledPowerToggle) -->
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-gray-800">Force LED Power:</span>
+                <label class="retro-switch-container retro-switch-small" title="Force LED Power On/Off">
+                  <input type="checkbox" id="ledPowerToggle">
+                  <span class="retro-switch-track">
+                    <span class="retro-on-label text-[8px]">ON</span>
+                    <span class="text-[8px]">OFF</span>
+                  </span>
+                  <span class="retro-switch-thumb"></span>
+                </label>
+              </div>
+
+              <!-- LED Brightness (PWM) Slider (Preserves IDs: brightnessSlider, dimmerValDisplay) -->
+              <div class="space-y-1">
+                <div class="flex justify-between text-xs">
+                  <span class="text-gray-800 font-semibold">LED Brightness (PWM):</span>
+                  <span id="dimmerValDisplay"
+                    class="font-mono font-bold bg-white px-2 py-0.5 border border-[#808080] text-black shadow-inner">75%</span>
+                </div>
+                <input type="range" id="brightnessSlider" min="0" max="100" value="75" class="w-full">
+              </div>
+
+            </div>
+
+            <!-- Auto Threshold Slider (Active in LDR Auto Mode) (Preserves IDs: thresholdSlider, thresholdValDisplay) -->
+            <div id="thresholdSliderContainer" class="pt-2 border-t border-[#a0a0a0] space-y-1 transition-opacity">
+              <div class="flex justify-between items-center text-xs">
+                <span class="text-gray-800 font-semibold" id="thresholdLabel">Auto Trigger Threshold:</span>
+                <span id="thresholdValDisplay"
+                  class="font-mono font-bold bg-white px-2 py-0.5 border border-[#808080] text-amber-800 shadow-inner">400
+                  Lux</span>
+              </div>
+              <input type="range" id="thresholdSlider" min="100" max="800" value="400" step="10" class="w-full">
+              <p id="thresholdHelpText" class="text-[10px] text-gray-500 italic hidden">LDR threshold inactive in PIR mode</p>
+            </div>
+
+            <!-- AUTO ACTIVATION TRIGGER SENSOR SLIDE SWITCH: LDR vs PIR -->
+            <div class="pt-2 border-t border-[#a0a0a0] space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-xs font-bold text-black uppercase tracking-wide flex items-center gap-1.5">
+                    <i class="fa-solid fa-bolt text-amber-600"></i> Auto Activation Trigger
+                  </div>
+                  <p id="triggerSourceSubtitle" class="text-[11px] text-gray-700 mt-0.5">
+                    Sensor: <span class="text-teal-800 font-bold" id="triggerSourceLabel">LDR (Light Intensity)</span>
+                  </p>
+                </div>
+
+                <!-- Retro Dual Slide Switch: LDR vs PIR (Preserves ID: triggerSourceToggle) -->
+                <label class="retro-switch-container retro-switch-dual" title="Toggle Auto LED Trigger: LDR (Light) or PIR (Motion)">
+                  <input type="checkbox" id="triggerSourceToggle">
+                  <span class="retro-switch-track">
+                    <span class="retro-on-label text-[9px] font-bold">PIR</span>
+                    <span class="text-[9px] font-bold text-gray-300">LDR</span>
+                  </span>
+                  <span class="retro-switch-thumb"></span>
+                </label>
+              </div>
+
+
+            </div>
+
+            <!-- OLED DISPLAY CONTENT SELECTOR: Which information to display on OLED -->
+            <div class="pt-2 border-t border-[#a0a0a0] space-y-1.5">
+              <div class="flex items-center justify-between">
+                <div class="text-xs font-bold text-black uppercase tracking-wide flex items-center gap-1.5">
+                  <i class="fa-solid fa-tv text-blue-800"></i> 0.96" OLED Display Content
+                </div>
+                <span id="oledScreenBadge"
+                  class="text-[10px] font-mono px-1.5 py-0.5 bg-white border border-[#808080] font-bold text-blue-900 shadow-inner">
+                  Page 1/4
+                </span>
+              </div>
+
+              <!-- Retro ComboBox Select (Preserves ID: oledScreenSelect) -->
+              <select id="oledScreenSelect" class="retro-select">
+                <option value="ldr">Screen 1: Lux Intensity &amp; LED Status</option>
+                <option value="pir">Screen 2: PIR Motion Detection Status</option>
+                <option value="combined">Screen 3: Lux Intensity + Motion Status</option>
+                <option value="system">Screen 4: Host IP &amp; UART Baud Rate</option>
+              </select>
+
+              <!-- Quick Tactical Push Buttons for Fast Switching -->
+              <div class="grid grid-cols-4 gap-1 pt-0.5">
+                <button type="button" class="retro-button text-[10px] py-1 px-1 oled-preset-btn active" data-screen="ldr" title="Screen 1: Lux &amp; LED">
+                  <i class="fa-solid fa-sun mr-0.5 text-amber-600"></i> Lux/LED
+                </button>
+                <button type="button" class="retro-button text-[10px] py-1 px-1 oled-preset-btn" data-screen="pir" title="Screen 2: PIR Motion">
+                  <i class="fa-solid fa-person-walking mr-0.5 text-cyan-700"></i> PIR Motion
+                </button>
+                <button type="button" class="retro-button text-[10px] py-1 px-1 oled-preset-btn" data-screen="combined" title="Screen 3: Lux + Motion">
+                  <i class="fa-solid fa-gauge mr-0.5 text-purple-700"></i> Lux+PIR
+                </button>
+                <button type="button" class="retro-button text-[10px] py-1 px-1 oled-preset-btn" data-screen="system" title="Screen 4: Host IP &amp; UART">
+                  <i class="fa-solid fa-network-wired mr-0.5 text-green-700"></i> IP/UART
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Retro Device Footnote Box -->
+          <div
+            class="text-[11px] bg-white p-2 border border-[#808080] flex items-center justify-between font-mono shadow-inner">
+            <span>ESP32 Host: <strong class="text-black">192.168.1.105</strong></span>
+            <span>Bus: <strong class="text-blue-800">UART 115200</strong></span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =======================================================================
+         ROW 3: SYSTEM EVENT LOG TABLE (File Manager / List View Style)
+         ======================================================================= -->
+    <div class="retro-card">
+      <div class="retro-card-header">
+        <span class="flex items-center gap-1.5">
+          <i class="fa-solid fa-list-check text-yellow-300"></i> System Event Log (Telemetry History)
+        </span>
+        <!-- Preserves ID: clearLogBtn -->
+        <button id="clearLogBtn" class="retro-button text-xs py-0.5 px-3">
+          <i class="fa-solid fa-trash-can mr-1 text-gray-600"></i> Clear Log
+        </button>
+      </div>
+
+      <div class="p-3.5 bg-[#c0c0c0] space-y-2 border-t border-white">
+        <p class="text-xs text-gray-700">Real-time log of triggers, threshold events, and manual overrides</p>
+
+        <!-- 4-Column Retro Table Viewport (Preserves ID: eventLogTableBody) -->
+        <div class="retro-sunken overflow-x-auto max-h-56">
+          <table class="retro-table">
+            <thead>
+              <tr>
+                <th>Event Type</th>
+                <th>Timestamp</th>
+                <th>Trigger Source</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="eventLogTableBody">
+              <!-- Dynamic rows populated via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="flex items-center justify-between text-[11px] text-gray-600 pt-1 font-mono">
+          <span>Buffer: Max 15 Events FIFO</span>
+          <span>Status: Telemetry Synchronized</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =========================================================================
+       TOAST NOTIFICATION CONTAINER (Preserves ID: toastContainer)
+       ========================================================================= -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- 
+    =========================================================================
+    OPTIMIZED & UNCHANGED SYSTEM LOGIC (ALL IDS & HANDLERS PRESERVED)
+    =========================================================================
+  -->
+  <script>
+    // =========================================================================
+    // 1. CONSTANTS & SYSTEM CONFIGURATION
+    // =========================================================================
+    const MAX_HISTORICAL_TELEMETRY_POINTS = 10;
+    const MAX_LOG_TABLE_ROWS = 15;
+
+    // Resilient Polling Configuration with Exponential Backoff
+    const BASE_POLLING_INTERVAL_MS = 2000;   // 2s default telemetry loop
+    const MAX_POLLING_INTERVAL_MS = 30000;  // 30s maximum backoff ceiling
+    let currentPollingIntervalMs = BASE_POLLING_INTERVAL_MS;
+    let consecutiveFetchFailures = 0;
+    let pollingTimerId = null;
+
+    // =========================================================================
+    // 2. DOM ELEMENT CACHE
+    // =========================================================================
+    const dom = {
+      // Header Badges
+      modeStatusBadge: null,
+      connectionPill: null,
+      telemetryRateBadge: null,
+
+      // Top KPI Display Nodes
+      kpiLuxValue: null,
+      kpiLuxStatus: null,
+      kpiLedOutput: null,
+      kpiPwmBadge: null,
+      kpiLedPowerText: null,
+      kpiControlMode: null,
+      kpiControlModeSub: null,
+      kpiModeDesc: null,
+
+      // New Top KPI Display Nodes (PIR & OLED)
+      kpiPirValue: null,
+      kpiPirStatus: null,
+      kpiPirBadge: null,
+      kpiOledValue: null,
+      kpiOledSub: null,
+      kpiOledStatus: null,
+
+      // Chart Metrics Footer
+      chartStatCurrent: null,
+      chartStatThreshold: null,
+      chartStatMode: null,
+
+      // Hardware Control Panel
+      overrideSubtitle: null,
+      overrideToggle: null,
+      manualControlsGroup: null,
+      ledPowerToggle: null,
+      brightnessSlider: null,
+      dimmerValDisplay: null,
+      thresholdLabel: null,
+      thresholdSlider: null,
+      thresholdValDisplay: null,
+      thresholdSliderContainer: null,
+      thresholdHelpText: null,
+
+      // New Hardware Controls (Trigger Source Switch & OLED Selector)
+      triggerSourceToggle: null,
+      triggerSourceSubtitle: null,
+      triggerSourceLabel: null,
+      oledScreenSelect: null,
+      oledScreenBadge: null,
+      oledPresetBtns: [],
+
+      // System Log Table & Toast Container
+      eventLogTableBody: null,
+      clearLogBtn: null,
+      toastContainer: null,
+    };
+
+    /**
+     * Populates the DOM cache object once during boot.
+     */
+    function initializeDomCache() {
+      dom.modeStatusBadge = document.getElementById('modeStatusBadge');
+      dom.connectionPill = document.getElementById('connectionPill');
+      dom.telemetryRateBadge = document.getElementById('telemetryRateBadge');
+
+      dom.kpiLuxValue = document.getElementById('kpiLuxValue');
+      dom.kpiLuxStatus = document.getElementById('kpiLuxStatus');
+      dom.kpiLedOutput = document.getElementById('kpiLedOutput');
+      dom.kpiPwmBadge = document.getElementById('kpiPwmBadge');
+      dom.kpiLedPowerText = document.getElementById('kpiLedPowerText');
+      dom.kpiControlMode = document.getElementById('kpiControlMode');
+      dom.kpiControlModeSub = document.getElementById('kpiControlModeSub');
+      dom.kpiModeDesc = document.getElementById('kpiModeDesc');
+
+      dom.kpiPirValue = document.getElementById('kpiPirValue');
+      dom.kpiPirStatus = document.getElementById('kpiPirStatus');
+      dom.kpiPirBadge = document.getElementById('kpiPirBadge');
+      dom.kpiOledValue = document.getElementById('kpiOledValue');
+      dom.kpiOledSub = document.getElementById('kpiOledSub');
+      dom.kpiOledStatus = document.getElementById('kpiOledStatus');
+
+      dom.chartStatCurrent = document.getElementById('chartStatCurrent');
+      dom.chartStatThreshold = document.getElementById('chartStatThreshold');
+      dom.chartStatMode = document.getElementById('chartStatMode');
+
+      dom.overrideSubtitle = document.getElementById('overrideSubtitle');
+      dom.overrideToggle = document.getElementById('overrideToggle');
+      dom.manualControlsGroup = document.getElementById('manualControlsGroup');
+      dom.ledPowerToggle = document.getElementById('ledPowerToggle');
+      dom.brightnessSlider = document.getElementById('brightnessSlider');
+      dom.dimmerValDisplay = document.getElementById('dimmerValDisplay');
+      dom.thresholdLabel = document.getElementById('thresholdLabel');
+      dom.thresholdSlider = document.getElementById('thresholdSlider');
+      dom.thresholdValDisplay = document.getElementById('thresholdValDisplay');
+      dom.thresholdSliderContainer = document.getElementById('thresholdSliderContainer');
+      dom.thresholdHelpText = document.getElementById('thresholdHelpText');
+
+      dom.triggerSourceToggle = document.getElementById('triggerSourceToggle');
+      dom.triggerSourceSubtitle = document.getElementById('triggerSourceSubtitle');
+      dom.triggerSourceLabel = document.getElementById('triggerSourceLabel');
+      dom.oledScreenSelect = document.getElementById('oledScreenSelect');
+      dom.oledScreenBadge = document.getElementById('oledScreenBadge');
+      dom.oledPresetBtns = Array.from(document.querySelectorAll('.oled-preset-btn'));
+
+      dom.eventLogTableBody = document.getElementById('eventLogTableBody');
+      dom.clearLogBtn = document.getElementById('clearLogBtn');
+      dom.toastContainer = document.getElementById('toastContainer');
+    }
+
+    // =========================================================================
+    // 3. APPLICATION STATE MANAGEMENT
+    // Central single source of truth for IoT hardware status
+    // =========================================================================
+    const systemState = {
+      isManualOverrideActive: false, // false = Auto Sensor control, true = ESP32 Admin Override
+      isLedPowerEnabled: true,  // Boolean power output status
+      ledPwmDutyCycle: 75,    // 0 - 100% PWM brightness
+      ldrAutoThresholdLux: 400,   // Darkness trigger threshold (Lux)
+      currentAmbientLux: 485,   // Current ambient light telemetry reading
+      isTelemetryActive: true,  // Stream toggle state
+      triggerSource: 'ldr',    // 'ldr' (Light Intensity Sensor) or 'pir' (HC-SR501 Motion Sensor)
+      isPirMotionDetected: false, // true = Motion Detected, false = Standby/Clear
+      oledScreen: 'ldr',       // 'ldr', 'pir', 'combined', 'system'
+      pirDetectionCount: 0,    // Motion trigger count
+      chartTimeLabels: [],    // Time labels buffer for Chart.js
+      chartLuxData: []     // Lux values buffer for Chart.js
+    };
+
+    // Global Chart instance handle
+    let lightChartInstance = null;
+
+    // Historical activity log buffer
+    let eventLogEntries = [
+      { type: "System Baseline Init", time: getFormattedTimestamp(-180), source: "ESP32 Host", status: "SUCCESS" },
+      { type: "STM32 UART Telemetry Linked", time: getFormattedTimestamp(-120), source: "STM32 Blue Pill", status: "SUCCESS" },
+      { type: "Auto Dimming Active", time: getFormattedTimestamp(-60), source: "LDR Feedback", status: "INFO" }
+    ];
+
+    /**
+     * Helper to get a formatted time string HH:MM:SS with optional offset in seconds.
+     */
+    function getFormattedTimestamp(offsetSeconds = 0) {
+      const targetDate = new Date(Date.now() + offsetSeconds * 1000);
+      return targetDate.toTimeString().split(' ')[0];
+    }
+
+    // =========================================================================
+    // 4. CHART TELEMETRY ENGINE (Chart.js styled for Retro CRT / Oscilloscope)
+    // =========================================================================
+    function initializeChartEngine() {
+      // Pre-populate buffer with initial historical telemetry points
+      for (let i = 8; i >= 0; i--) {
+        systemState.chartTimeLabels.push(getFormattedTimestamp(-i * 4));
+        const simulatedLux = Math.round(450 + Math.sin(i * 0.8) * 100 + (Math.random() * 20 - 10));
+        systemState.chartLuxData.push(simulatedLux);
+      }
+
+      const canvasCtx = document.getElementById('lightIntensityChart').getContext('2d');
+
+      // Retro Phosphor Gradient fill
+      const backgroundGradient = canvasCtx.createLinearGradient(0, 0, 0, 240);
+      backgroundGradient.addColorStop(0, 'rgba(0, 242, 195, 0.35)');
+      backgroundGradient.addColorStop(1, 'rgba(0, 242, 195, 0.02)');
+
+      lightChartInstance = new Chart(canvasCtx, {
+        type: 'line',
+        data: {
+          labels: systemState.chartTimeLabels,
+          datasets: [{
+            label: 'Ambient Light (Lux)',
+            data: systemState.chartLuxData,
+            borderColor: '#00f2c3',
+            borderWidth: 2,
+            backgroundColor: backgroundGradient,
+            fill: true,
+            tension: 0.25,
+            pointBackgroundColor: '#00f2c3',
+            pointBorderColor: '#ffffff',
+            pointRadius: 3,
+            pointHoverRadius: 5
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              grid: { color: 'rgba(0, 242, 195, 0.12)' },
+              ticks: { color: '#00f2c3', font: { family: "'Share Tech Mono', monospace", size: 10 } }
+            },
+            y: {
+              min: 0,
+              max: 1000,
+              grid: { color: 'rgba(0, 242, 195, 0.12)' },
+              ticks: { color: '#00f2c3', font: { family: "'Share Tech Mono', monospace", size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    /**
+     * Efficiently updates the Chart.js line dataset in-place without memory leaks.
+     */
+    function updateChartDataset() {
+      if (!lightChartInstance) return;
+      lightChartInstance.data.labels = systemState.chartTimeLabels;
+      lightChartInstance.data.datasets[0].data = systemState.chartLuxData;
+      lightChartInstance.update('none');
+    }
+
+    // =========================================================================
+    // 5. ESP32 HARDWARE BRIDGE & RESILIENT POLLING
+    // =========================================================================
+    function sendEsp32Command(endpoint, queryParameters) {
+      const queryString = new URLSearchParams(queryParameters).toString();
+      const fullEndpointUrl = `${endpoint}?${queryString}`;
+
+      console.log(`[ESP32 REST Dispatcher] Outbound GET request: ${fullEndpointUrl}`);
+
+      fetch(fullEndpointUrl)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(payload => {
+          console.log(`[ESP32 Response Received] Payload:`, payload);
+        })
+        .catch(error => {
+          console.warn(`[ESP32 REST Dispatcher] Endpoint ${endpoint} unreachable. (Operating in Local Simulation Mode)`);
+        });
+    }
+
+    /**
+     * Primary Telemetry Loop with Exponential Backoff Resilience.
+     */
+    function executeTelemetryLoop() {
+      if (!systemState.isTelemetryActive) return;
+
+      fetch('/api/telemetry')
+        .then(response => {
+          if (!response.ok) throw new Error("Network response was not ok");
+          return response.json();
+        })
+        .then(data => {
+          // 1. Sync state variables with actual STM32 & ESP32 hardware telemetry
+          if (data.lux !== undefined) systemState.currentAmbientLux = data.lux;
+          if (data.led !== undefined) systemState.isLedPowerEnabled = (data.led === 1 || data.led === true);
+          if (data.pwm !== undefined) systemState.ledPwmDutyCycle = Math.round((data.pwm / 255) * 100);
+          if (data.mode !== undefined) systemState.isManualOverrideActive = (data.mode === "MANUAL");
+
+          // Sync PIR sensor telemetry
+          if (data.pir !== undefined || data.motion !== undefined) {
+            const motionVal = (data.pir !== undefined) ? data.pir : data.motion;
+            const isDetected = (motionVal === 1 || motionVal === true || motionVal === "MOTION" || motionVal === "1");
+            if (isDetected && !systemState.isPirMotionDetected) {
+              systemState.pirDetectionCount++;
+              appendSystemLogEntry("PIR Movement Detected", "HC-SR501", "INFO");
+            }
+            systemState.isPirMotionDetected = isDetected;
+          }
+
+          // Sync Trigger Source ('ldr' or 'pir')
+          if (data.trigger !== undefined || data.source !== undefined) {
+            const src = data.trigger || data.source;
+            if (src === 'pir' || src === 'ldr') {
+              systemState.triggerSource = src;
+              if (dom.triggerSourceToggle) dom.triggerSourceToggle.checked = (src === 'pir');
+            }
+          }
+
+          // Sync OLED screen page
+          if (data.oled !== undefined) {
+            systemState.oledScreen = data.oled;
+          }
+
+          // Only update threshold from hardware if in AUTO mode to avoid fighting the slider
+          if (!systemState.isManualOverrideActive && data.threshold !== undefined) {
+            systemState.ldrAutoThresholdLux = data.threshold;
+          }
+
+          // 2. Append new reading for Chart.js
+          systemState.chartTimeLabels.push(getFormattedTimestamp(0));
+          systemState.chartLuxData.push(systemState.currentAmbientLux);
+          if (systemState.chartTimeLabels.length > MAX_HISTORICAL_TELEMETRY_POINTS) {
+            systemState.chartTimeLabels.shift();
+            systemState.chartLuxData.shift();
+          }
+
+          // 3. Update UI & Chart
+          renderDashboardUi();
+          updateChartDataset();
+
+          // 4. Schedule next cycle
+          resetPollingInterval();
+          scheduleNextTelemetryFetch();
+        })
+        .catch(error => {
+          applyExponentialBackoff();
+          scheduleNextTelemetryFetch();
+        });
+    }
+
+    function scheduleNextTelemetryFetch() {
+      if (pollingTimerId) clearTimeout(pollingTimerId);
+      pollingTimerId = setTimeout(executeTelemetryLoop, currentPollingIntervalMs);
+    }
+
+    function resetPollingInterval() {
+      if (consecutiveFetchFailures > 0) {
+        console.log("[ESP32 Bridge] Connection re-established. Resetting polling interval to 2s.");
+      }
+      consecutiveFetchFailures = 0;
+      currentPollingIntervalMs = BASE_POLLING_INTERVAL_MS;
+      if (dom.telemetryRateBadge) {
+        dom.telemetryRateBadge.innerText = `Poll: 2s`;
+      }
+    }
+
+    function applyExponentialBackoff() {
+      consecutiveFetchFailures++;
+      currentPollingIntervalMs = Math.min(MAX_POLLING_INTERVAL_MS, BASE_POLLING_INTERVAL_MS * Math.pow(2, consecutiveFetchFailures));
+      console.warn(`[ESP32 Hardware Bridge] Failed to reach ESP32 telemetry endpoint (${consecutiveFetchFailures} failures). Slowing down polling to ${currentPollingIntervalMs / 1000}s...`);
+
+      if (dom.telemetryRateBadge) {
+        dom.telemetryRateBadge.innerText = `Poll: ${currentPollingIntervalMs / 1000}s (Retry)`;
+      }
+    }
+
+    // =========================================================================
+    // 6. UI RENDERERS & EVENT HANDLERS
+    // =========================================================================
+    function renderDashboardUi() {
+      // 1. Ambient Light KPI
+      dom.kpiLuxValue.innerText = systemState.currentAmbientLux;
+      if (systemState.currentAmbientLux < 300) {
+        dom.kpiLuxStatus.innerText = "Low Light (Dark)";
+        dom.kpiLuxStatus.className = "text-xs text-rose-800 font-bold mt-1";
+      } else if (systemState.currentAmbientLux < 600) {
+        dom.kpiLuxStatus.innerText = "Moderate Ambient";
+        dom.kpiLuxStatus.className = "text-xs text-teal-800 font-bold mt-1";
+      } else {
+        dom.kpiLuxStatus.innerText = "Bright Daylight";
+        dom.kpiLuxStatus.className = "text-xs text-amber-800 font-bold mt-1";
+      }
+
+      // 2. LED Output KPI
+      dom.kpiLedOutput.innerText = systemState.isLedPowerEnabled ? `${systemState.ledPwmDutyCycle}%` : 'OFF';
+      dom.kpiPwmBadge.innerText = systemState.isLedPowerEnabled ? `PWM ${Math.round(systemState.ledPwmDutyCycle * 2.55)}` : 'PWM 0';
+      if (systemState.isLedPowerEnabled) {
+        dom.kpiLedPowerText.innerText = "POWER ON";
+        dom.kpiLedPowerText.className = "text-xs text-rose-800 font-bold mt-1";
+      } else {
+        dom.kpiLedPowerText.innerText = "STANDBY";
+        dom.kpiLedPowerText.className = "text-xs text-gray-700 font-bold mt-1";
+      }
+
+      // 3. Control Mode KPI
+      const isManual = systemState.isManualOverrideActive;
+      const isPirMode = (systemState.triggerSource === 'pir');
+
+      if (isManual) {
+        dom.kpiControlMode.innerText = 'MANUAL';
+        dom.kpiControlMode.className = "text-xl font-bold text-rose-400 tracking-wider";
+        if (dom.kpiControlModeSub) dom.kpiControlModeSub.innerText = '(ESP32)';
+        dom.kpiModeDesc.innerText = 'Manual Override';
+        dom.modeStatusBadge.className = "px-2.5 py-1 border border-black bg-purple-900 text-white font-bold text-xs uppercase flex items-center gap-1.5 shadow-sm";
+        dom.modeStatusBadge.innerHTML = `<i class="fa-solid fa-hand mr-1"></i> MANUAL OVERRIDE`;
+      } else {
+        dom.kpiControlMode.innerText = 'AUTO';
+        dom.kpiControlMode.className = "text-2xl font-bold text-yellow-400 tracking-wider";
+        if (dom.kpiControlModeSub) dom.kpiControlModeSub.innerText = '(STM32)';
+        dom.kpiModeDesc.innerText = isPirMode ? 'Auto (PIR Motion)' : 'Auto (LDR Sensor)';
+        dom.modeStatusBadge.className = "px-2.5 py-1 border border-black bg-[#dfdfdf] font-bold text-xs uppercase flex items-center gap-1.5 shadow-sm text-black";
+        dom.modeStatusBadge.innerHTML = `<i class="fa-solid fa-robot mr-1"></i> AUTO MODE`;
+      }
+
+      // 4. PIR Sensor KPI
+      if (dom.kpiPirValue) {
+        if (systemState.isPirMotionDetected) {
+          dom.kpiPirValue.innerText = "ACTIVE";
+          dom.kpiPirValue.className = "text-xl font-bold text-[#ff4b72] tracking-wider animate-pulse";
+          dom.kpiPirBadge.innerText = "DETECT";
+          dom.kpiPirBadge.className = "text-[10px] font-mono px-1 py-0.5 bg-[#ff4b72]/20 text-[#ff4b72] border border-[#ff4b72]/40 ml-1.5";
+          dom.kpiPirStatus.innerText = "Motion Detected!";
+          dom.kpiPirStatus.className = "text-[11px] text-rose-800 font-bold mt-0.5 leading-tight";
+
+        } else {
+          dom.kpiPirValue.innerText = "CLEAR";
+          dom.kpiPirValue.className = "text-xl font-bold text-gray-400 tracking-wider";
+          dom.kpiPirBadge.innerText = "IDLE";
+          dom.kpiPirBadge.className = "text-[10px] font-mono px-1 py-0.5 bg-gray-800 text-gray-300 border border-gray-600 ml-1.5";
+          dom.kpiPirStatus.innerText = "No Motion (Clear)";
+          dom.kpiPirStatus.className = "text-[11px] text-teal-800 font-bold mt-0.5 leading-tight";
+
+        }
+      }
+
+      // 5. 0.96-inch OLED Display KPI (Showing exact screen information)
+      if (dom.kpiOledValue) {
+        let screenTitle = "Lux & LED Status";
+        let line1 = "";
+        let line2 = "";
+        let badge = "Page 1/4";
+
+        if (systemState.oledScreen === 'ldr') {
+          // Screen 1: Lux intensity & LED status
+          screenTitle = "Lux & LED Status";
+          line1 = `${systemState.currentAmbientLux} Lux | LED:${systemState.isLedPowerEnabled ? systemState.ledPwmDutyCycle + '%' : 'OFF'}`;
+          line2 = "SCREEN 1/4";
+          badge = "Page 1/4";
+        } else if (systemState.oledScreen === 'pir') {
+          // Screen 2: PIR Motion Detection Status
+          screenTitle = "PIR Motion Status";
+          line1 = `PIR: ${systemState.isPirMotionDetected ? 'MOTION DETECT' : 'STANDBY CLEAR'}`;
+          line2 = "SCREEN 2/4";
+          badge = "Page 2/4";
+        } else if (systemState.oledScreen === 'combined') {
+          // Screen 3: Lux intensity + Motion Detection Status
+          screenTitle = "Lux + Motion Status";
+          line1 = `${systemState.currentAmbientLux} Lux | ${systemState.isPirMotionDetected ? 'MOTION' : 'CLEAR'}`;
+          line2 = "SCREEN 3/4";
+          badge = "Page 3/4";
+        } else if (systemState.oledScreen === 'system') {
+          // Screen 4: Host IP and bus UART rate
+          screenTitle = "Host IP & UART Rate";
+          line1 = "192.168.1.105";
+          line2 = "UART 115200 (4/4)";
+          badge = "Page 4/4";
+        }
+
+        dom.kpiOledValue.innerText = line1;
+        if (dom.kpiOledSub) dom.kpiOledSub.innerText = line2;
+        dom.kpiOledStatus.innerText = screenTitle;
+        if (dom.oledScreenBadge) dom.oledScreenBadge.innerText = badge;
+
+        if (dom.oledScreenSelect && dom.oledScreenSelect.value !== systemState.oledScreen) {
+          dom.oledScreenSelect.value = systemState.oledScreen;
+        }
+
+        if (dom.oledPresetBtns && dom.oledPresetBtns.length) {
+          dom.oledPresetBtns.forEach(btn => {
+            if (btn.dataset.screen === systemState.oledScreen) {
+              btn.classList.add('active');
+            } else {
+              btn.classList.remove('active');
+            }
+          });
+        }
+      }
+
+      // 6. Control Hub: Threshold Slider, Manual Override, & PIR trigger locking UX
+      if (isManual) {
+        // MANUAL OVERRIDE ENGAGED
+        dom.overrideSubtitle.innerHTML = `Mode: <span class="text-rose-800 font-bold">MANUAL OVERRIDE (ESP32)</span>`;
+        dom.manualControlsGroup.classList.remove('opacity-50', 'pointer-events-none');
+
+        // When in manual override, LDR auto threshold is bypassed
+        if (dom.thresholdSliderContainer) {
+          dom.thresholdSliderContainer.classList.add('opacity-40', 'pointer-events-none');
+          dom.thresholdSlider.disabled = true;
+          if (dom.thresholdLabel) dom.thresholdLabel.innerText = "LDR Threshold (Bypassed):";
+          dom.thresholdValDisplay.innerText = "Bypassed (MAN)";
+          if (dom.thresholdHelpText) {
+            dom.thresholdHelpText.innerText = "Manual override active (bypasses auto threshold)";
+            dom.thresholdHelpText.classList.remove('hidden');
+          }
+        }
+      } else {
+        // AUTO MODE ACTIVE (Manual controls disabled)
+        dom.manualControlsGroup.classList.add('opacity-50', 'pointer-events-none');
+
+        if (isPirMode) {
+          // PIR MODE: User CANNOT change LDR threshold slider!
+          dom.overrideSubtitle.innerHTML = `Mode: <span class="text-purple-900 font-bold">STM32 AUTO (PIR)</span>`;
+          if (dom.thresholdSliderContainer) {
+            dom.thresholdSliderContainer.classList.add('opacity-40', 'pointer-events-none');
+            dom.thresholdSlider.disabled = true;
+            if (dom.thresholdLabel) dom.thresholdLabel.innerText = "LDR Threshold (Inactive):";
+            dom.thresholdValDisplay.innerText = "Inactive (PIR)";
+            if (dom.thresholdHelpText) {
+              dom.thresholdHelpText.innerText = "LDR threshold disabled when Auto Trigger is PIR mode";
+              dom.thresholdHelpText.classList.remove('hidden');
+            }
+          }
+        } else {
+          // LDR MODE: User CAN change LDR threshold slider
+          dom.overrideSubtitle.innerHTML = `Mode: <span class="text-teal-800 font-bold">STM32 AUTO (LDR)</span>`;
+          if (dom.thresholdSliderContainer) {
+            dom.thresholdSliderContainer.classList.remove('opacity-40', 'pointer-events-none');
+            dom.thresholdSlider.disabled = false;
+            if (dom.thresholdLabel) dom.thresholdLabel.innerText = "Auto Trigger Threshold:";
+            dom.thresholdValDisplay.innerText = `${systemState.ldrAutoThresholdLux} Lux`;
+            if (dom.thresholdHelpText) {
+              dom.thresholdHelpText.classList.add('hidden');
+            }
+          }
+        }
+      }
+
+      // 7. Auto Trigger Sensor Setting UI
+      if (dom.triggerSourceLabel) {
+        if (isPirMode) {
+          dom.triggerSourceLabel.innerText = "PIR (Motion Sensor)";
+          dom.triggerSourceLabel.className = "text-purple-800 font-bold";
+          if (dom.chartStatMode) dom.chartStatMode.innerText = "Auto PIR Motion";
+        } else {
+          dom.triggerSourceLabel.innerText = "LDR (Light Intensity)";
+          dom.triggerSourceLabel.className = "text-teal-800 font-bold";
+          if (dom.chartStatMode) dom.chartStatMode.innerText = "Auto Lux Dimming";
+        }
+      }
+
+      // 8. Chart Footer Summary
+      dom.chartStatCurrent.innerText = `${systemState.currentAmbientLux} Lux`;
+      dom.chartStatThreshold.innerText = isPirMode ? "Inactive (PIR)" : `${systemState.ldrAutoThresholdLux} Lux`;
+      dom.dimmerValDisplay.innerText = `${systemState.ledPwmDutyCycle}%`;
+    }
+
+    function handleOverrideToggleChange(event) {
+      const isChecked = event.target.checked;
+      systemState.isManualOverrideActive = isChecked;
+
+      if (isChecked) {
+        appendSystemLogEntry("Manual Override ENGAGED", "ESP32 Admin", "OVERRIDE");
+        displayToastNotification("ESP32 Manual Override Enabled", "warning");
+      } else {
+        const triggerLabel = systemState.triggerSource === 'pir' ? 'PIR Motion' : 'STM32 AUTO (LDR)';
+        appendSystemLogEntry(`Returned to Auto Control (${triggerLabel})`, "ESP32 Admin", "SUCCESS");
+        displayToastNotification(`Returned to Auto Mode (${triggerLabel})`, "info");
+      }
+
+      renderDashboardUi();
+      sendEsp32Command('/api/mode', { state: systemState.isManualOverrideActive ? 'manual' : 'auto' });
+    }
+
+    function handleLedPowerToggleChange(event) {
+      const isChecked = event.target.checked;
+      systemState.isLedPowerEnabled = isChecked;
+
+      if (!isChecked) {
+        systemState.ledPwmDutyCycle = 0;
+      } else {
+        systemState.ledPwmDutyCycle = parseInt(dom.brightnessSlider.value, 10) || 75;
+      }
+
+      renderDashboardUi();
+      appendSystemLogEntry(`LED Forced ${isChecked ? 'ON' : 'OFF'}`, "ESP32 Admin", "OVERRIDE");
+      displayToastNotification(`LED state manually set to ${isChecked ? 'ON' : 'OFF'}`, "info");
+      sendEsp32Command('/api/toggle', { state: isChecked ? 'on' : 'off' });
+    }
+
+    function handleBrightnessSliderInput(event) {
+      const newBrightnessValue = parseInt(event.target.value, 10);
+      systemState.ledPwmDutyCycle = newBrightnessValue;
+
+      if (systemState.ledPwmDutyCycle > 0) {
+        systemState.isLedPowerEnabled = true;
+        dom.ledPowerToggle.checked = true;
+      }
+
+      renderDashboardUi();
+      sendEsp32Command('/api/dimmer', { pwm: Math.round(systemState.ledPwmDutyCycle * 2.55) });
+    }
+
+    function handleThresholdSliderInput(event) {
+      // In PIR mode, do not allow changes
+      if (systemState.triggerSource === 'pir') return;
+
+      const newThresholdLux = parseInt(event.target.value, 10);
+      systemState.ldrAutoThresholdLux = newThresholdLux;
+      dom.thresholdValDisplay.innerText = `${systemState.ldrAutoThresholdLux} Lux`;
+
+      renderDashboardUi();
+      sendEsp32Command('/api/threshold', { lux: systemState.ldrAutoThresholdLux });
+    }
+
+    function handleTriggerSourceToggleChange(event) {
+      const isPir = event.target.checked;
+      systemState.triggerSource = isPir ? 'pir' : 'ldr';
+
+      // Update simulated LED power if in Auto mode
+      if (!systemState.isManualOverrideActive) {
+        if (isPir) {
+          systemState.isLedPowerEnabled = systemState.isPirMotionDetected;
+        } else {
+          systemState.isLedPowerEnabled = (systemState.currentAmbientLux < systemState.ldrAutoThresholdLux);
+        }
+      }
+
+      renderDashboardUi();
+      const modeName = isPir ? 'PIR Sensor (HC-SR501)' : 'Light Intensity Sensor (LDR)';
+      appendSystemLogEntry(`Auto LED Trigger set to ${isPir ? 'PIR Motion' : 'LDR Lux'}`, "ESP32 Admin", "INFO");
+      displayToastNotification(`Auto LED trigger switched to ${modeName}`, "info");
+      sendEsp32Command('/api/trigger', { source: systemState.triggerSource });
+    }
+
+
+
+    function handleOledScreenChange(newScreen) {
+      systemState.oledScreen = newScreen;
+      renderDashboardUi();
+
+      const screenNames = {
+        ldr: "Screen 1: Lux Intensity & LED Status",
+        pir: "Screen 2: PIR Motion Detection Status",
+        combined: "Screen 3: Lux Intensity + Motion Status",
+        system: "Screen 4: Host IP & UART Baud Rate"
+      };
+
+      appendSystemLogEntry(`OLED screen set to: ${screenNames[newScreen] || newScreen}`, "ESP32 Admin", "INFO");
+      displayToastNotification(`OLED display updated: ${screenNames[newScreen] || newScreen}`, "info");
+      sendEsp32Command('/api/oled', { screen: systemState.oledScreen });
+    }
+
+    function appendSystemLogEntry(eventType, triggerSource, statusLevel) {
+      eventLogEntries.unshift({
+        type: eventType,
+        time: getFormattedTimestamp(0),
+        source: triggerSource,
+        status: statusLevel
+      });
+
+      if (eventLogEntries.length > MAX_LOG_TABLE_ROWS) {
+        eventLogEntries.pop();
+      }
+
+      renderLogTable();
+    }
+
+    function renderLogTable() {
+      if (!dom.eventLogTableBody) return;
+
+      dom.eventLogTableBody.innerHTML = '';
+      eventLogEntries.forEach(logItem => {
+        const tableRow = document.createElement('tr');
+
+        let statusStyleClass = "border-[#808080] text-teal-800 bg-[#e0f2fe]";
+        if (logItem.status === 'OVERRIDE') statusStyleClass = "border-[#808080] text-rose-800 bg-[#ffe4e6]";
+        if (logItem.status === 'INFO') statusStyleClass = "border-[#808080] text-purple-800 bg-[#f3e8ff]";
+
+        tableRow.innerHTML = `
+          <td class="font-bold text-black">${logItem.type}</td>
+          <td class="text-gray-700 font-mono">${logItem.time}</td>
+          <td>
+            <span class="px-2 py-0.5 border border-[#808080] bg-[#eaeaea] text-black">
+              ${logItem.source}
+            </span>
+          </td>
+          <td>
+            <span class="px-2 py-0.5 font-bold ${statusStyleClass}">
+              ${logItem.status}
+            </span>
+          </td>
+        `;
+        dom.eventLogTableBody.appendChild(tableRow);
+      });
+    }
+
+    function handleClearLogTable() {
+      eventLogEntries = [];
+      renderLogTable();
+      displayToastNotification("System activity logs cleared", "info");
+    }
+
+    function displayToastNotification(messageText, notificationType = 'info') {
+      if (!dom.toastContainer) return;
+
+      const toastElement = document.createElement('div');
+      const borderAccentClass = notificationType === 'warning' ? 'border-accentCoral' : 'border-accentTeal';
+
+      toastElement.className = `retro-toast ${borderAccentClass} pointer-events-auto transition-all duration-300`;
+      toastElement.innerHTML = `<span>${messageText}</span>`;
+
+      dom.toastContainer.appendChild(toastElement);
+      setTimeout(() => toastElement.remove(), 3200);
+    }
+
+    // =========================================================================
+    // 7. DASHBOARD BOOTSTRAP INITIALIZATION
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log("[Retro Dashboard] Booting Lighting Control System...");
+
+      // 1. Cache all DOM node references
+      initializeDomCache();
+
+      // 2. Attach UI event listeners
+      dom.overrideToggle.addEventListener('change', handleOverrideToggleChange);
+      dom.ledPowerToggle.addEventListener('change', handleLedPowerToggleChange);
+      dom.brightnessSlider.addEventListener('input', handleBrightnessSliderInput);
+      dom.thresholdSlider.addEventListener('input', handleThresholdSliderInput);
+      dom.clearLogBtn.addEventListener('click', handleClearLogTable);
+
+      if (dom.triggerSourceToggle) {
+        dom.triggerSourceToggle.addEventListener('change', handleTriggerSourceToggleChange);
+      }
+
+      if (dom.oledScreenSelect) {
+        dom.oledScreenSelect.addEventListener('change', (e) => handleOledScreenChange(e.target.value));
+      }
+
+      if (dom.oledPresetBtns && dom.oledPresetBtns.length) {
+        dom.oledPresetBtns.forEach(btn => {
+          btn.addEventListener('click', () => handleOledScreenChange(btn.dataset.screen));
+        });
+      }
+
+      // 3. Set initial control inputs from systemState
+      dom.overrideToggle.checked = systemState.isManualOverrideActive;
+      dom.ledPowerToggle.checked = systemState.isLedPowerEnabled;
+      dom.brightnessSlider.value = systemState.ledPwmDutyCycle;
+      dom.thresholdSlider.value = systemState.ldrAutoThresholdLux;
+
+      if (dom.triggerSourceToggle) {
+        dom.triggerSourceToggle.checked = (systemState.triggerSource === 'pir');
+      }
+
+      if (dom.oledScreenSelect) {
+        dom.oledScreenSelect.value = systemState.oledScreen;
+      }
+
+      // 4. Initialize Chart engine & render baseline UI
+      initializeChartEngine();
+      renderLogTable();
+      renderDashboardUi();
+
+      // 5. Kick off resilient telemetry polling loop
+      scheduleNextTelemetryFetch();
+    });
+  </script>
+</body>
+
+</html>
